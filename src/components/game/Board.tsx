@@ -6,7 +6,7 @@ const MAX_MOVES = 6;
 
 export function Square({children, handleClick, index, isSelected}: {children?: React.ReactNode, handleClick?: (index: number) => void, index?: number, isSelected: boolean}) {
     return (
-            <div onClick={()=>handleClick?.(index!)} className={`w-20 h-20 bg-white text-black text-8xl font-bold flex items-center justify-center border-2 cursor-pointer ${isSelected ? `bg-lime-400 border-lime-500 border-4` : ``}`}>
+            <div onClick={()=>handleClick?.(index!)} className={`w-20 h-20 bg-white text-black text-8xl font-bold flex items-center justify-center cursor-pointer ${isSelected ? `bg-white border-6 border-cyan-500` : ``}`}>
                 {children}
             </div>
     )
@@ -72,7 +72,7 @@ export default function Board() {
 
     return (
         <div className="flex flex-col items-center justify-center">
-            <section className="grid grid-cols-3 grid-rows-3 gap-10">
+            <section className="grid grid-cols-3 grid-rows-3 gap-10 border-10 border-white">
                 {board.map((_, index) => (
                     <Square 
                     index={index}
