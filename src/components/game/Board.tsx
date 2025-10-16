@@ -4,9 +4,9 @@ import TurnComp from './TurnComp';
 
 const MAX_MOVES = 6;
 
-export function Square({children, handleClick, index, isSelected}) {
+export function Square({children, handleClick, index, isSelected}: {children?: React.ReactNode, handleClick?: (index: number) => void, index?: number, isSelected: boolean}) {
     return (
-            <div onClick={()=>handleClick(index)} className={`w-20 h-20 bg-white text-black text-8xl font-bold flex items-center justify-center border-2 cursor-pointer ${isSelected ? `bg-lime-400 border-lime-500 border-4` : ``}`}>
+            <div onClick={()=>handleClick?.(index!)} className={`w-20 h-20 bg-white text-black text-8xl font-bold flex items-center justify-center border-2 cursor-pointer ${isSelected ? `bg-lime-400 border-lime-500 border-4` : ``}`}>
                 {children}
             </div>
     )
@@ -18,7 +18,7 @@ export default function Board() {
     const [turn, setTurn] = useState<string>(TURNS.X);
 
     const [movesHistory, setMovesHistory] = useState<number[]>([]);
-    const [winner, setWinner] = useState(null);
+    const [winner, setWinner] = useState<string | null>(null);
 
     // log movements history
     useEffect(() =>{
@@ -78,6 +78,7 @@ export default function Board() {
                     index={index}
                     key={index}
                     handleClick={handleClick}
+                    isSelected={false}
                     >
                         {board[index]}
                     </Square>
