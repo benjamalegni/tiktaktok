@@ -1,7 +1,9 @@
 export const TURNS = {
     X: '×',
-    O: 'o'
+    O: '●'
 } as const;
+
+export type TurnValue = typeof TURNS[keyof typeof TURNS];
 
 export const WINNER_COMBINATIONS = [
     [0, 1, 2],
@@ -13,3 +15,13 @@ export const WINNER_COMBINATIONS = [
     [0, 4, 8],
     [2, 4, 6],
 ] as const;
+
+
+ const MatchStatus = {
+    waiting: 'waiting',
+    active: 'active',
+    finished: 'finished',
+    abandoned: 'abandoned',
+} as const;
+
+export type MatchStatus = typeof MatchStatus[keyof typeof MatchStatus];
