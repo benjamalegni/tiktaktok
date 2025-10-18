@@ -8,8 +8,6 @@ function App() {
     <main className="flex flex-col items-center justify-center h-screen gap-10">      
     {/* then allow local and multiplayer, right now only multiplayer */}
       <Multiplayer />
-
-      <Board isMultiplayer={false} matchId={null} onMultiplayerMove={() => {}} />
     </main>
   )
 }

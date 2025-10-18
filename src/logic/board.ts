@@ -15,10 +15,6 @@ export const referee = (
     board: (TurnValue | null)[],
     index: number,
     movesHistory: number[],
-    setMovesHistory: (movesHistory: number[]) => void,
-    setBoard: (board: (TurnValue | null)[]) => void,
-    setWinner: (winner: TurnValue | null) => void,
-    setTurn: (turn: TurnValue) => void,
     turn: TurnValue,
     ) => {
         if (board[index] !== null) {
@@ -38,14 +34,10 @@ export const referee = (
         newMovesHistory.push(index);
 
 
-        setMovesHistory(newMovesHistory);
-        setBoard(newBoard);
 
         if(checkWinner(newBoard)){
             console.log('winner', checkWinner(newBoard));
-            setWinner(checkWinner(newBoard) as TurnValue | null);
             return;
         }
 
-        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
 }

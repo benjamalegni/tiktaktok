@@ -1,46 +1,65 @@
 import { supabase } from '../../utils/supabase.ts'
 import { useEffect, useState } from 'react';
 import { TURNS, type MatchStatus, type TurnValue } from '../../lib/types';
-import Board from '../game/Board.tsx';
-import { referee } from '../../logic/board.ts';
+import Board, { MAX_MOVES } from '../game/Board.tsx';
+import { checkWinner } from '../../logic/board.ts';
 
 export default function Multiplayer() {
 
     const [roomCode, setRoomCode] = useState<string>('');
     const [name, setName] = useState<string>('');
     const [matchId, setMatchId] = useState<string | null>(null);
-    const [matchStatus, setMatchStatus] = useState<MatchStatus>('waiting');
     const [error, setError] = useState<string | null>(null);
+    
+    // multiplayer states
+    const [board, setBoard] = useState<(TurnValue | null)[]>(Array(9).fill(null));
+    const [turn, setTurn] = useState<TurnValue>(TURNS.X);
+    const [movesHistory, setMovesHistory] = useState<number[]>([]);
+    const [winner, setWinner] = useState<TurnValue | null>(null);
+    const [playerSign, setPlayerSign] = useState<string | null>(null);
 
+    const changeTurn = (turn: TurnValue) => {
+        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
+    }
 
-useEffect(() =>{
-    if(!matchId) return;
+    useEffect(() => {
+        if (!matchId) return;
 
-    const topic = `room:${matchId}:changes`;
-    const channel = supabase.channel(topic, {
-        config: {
-            broadcast: {
-                self: true,
-                ack: true,
-            },
-        }})
-        .on('broadcast', {event: 'INSERT'}, (payload) =>{
-            console.log('broadcast INSERT', payload);
-        })       
-        .on('broadcast', {event: 'UPDATE'}, (payload) =>{
-            console.log('broadcast UPDATE', payload);
-        })
-        .subscribe((status) =>{
-            console.log('subscription status', status);
-        });
-        
+        const subscription = supabase
+            .channel(`match-${matchId}`)
+            .on('postgres_changes', 
+                { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'match',
+                    filter: `id=eq.${matchId}`
+                },
+                (payload) => {
+                    // update states if the change comes from another player
+                    if (payload.new.board) {
+                        const formattedBoard = payload.new.board.map((cell: string) => 
+                            cell === 'X' ? TURNS.X : cell === 'O' ? TURNS.O : null
+                        );
+                        setBoard(formattedBoard);
+                    }
+                    
+                    if (payload.new.winner) {
+                        setWinner(payload.new.winner);
+                    }
+
+                    if (payload.new.turn) {
+                        setTurn(payload.new.turn === 'X' ? TURNS.X : TURNS.O);
+                    }
+                }
+            )
+            .subscribe((status) => {
+                console.log('Subscription status:', status);
+            });
+
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(subscription);
         };
-
-
-
-    }, [matchId])
+    }, [matchId]);
 
 
     const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -55,71 +74,107 @@ useEffect(() =>{
         if (gameError) {
             console.error(gameError);
             setError("The room code is invalid");
-            setMatchStatus('abandoned');
             return;
         }
 
         if (gameData) {
-            console.log(gameData);
+            setPlayerSign('O');
+            setMatchId(roomCode);
             return;
         }
-
-        setMatchId(roomCode);
-
     }
 
     const handleCreateRoom = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if(!name) {
             setError("Your name is required to play");
-            setMatchStatus('abandoned');
             return;
         } else{
             setError(null);
         }
 
-        const {data:authData, error: authError} = await supabase.auth.signInAnonymously();
+        try {
+            const {data:authData, error: authError} = await supabase.auth.signInAnonymously();
 
-        if (authError) {
-            console.error(authError);
-            return;
-        }
-
-
-        if (authData) {
-            console.log(name);
-            const { data:matchData, error:matchError } = await supabase.from('match').insert({
-                player_x_name: name,
-            })
-            .select('id')
-            .single();
-
-            if (matchError) {
-                console.error(matchError);
+            if (authError) {
+                console.error('Auth error:', authError);
+                setError(`Authentication failed: ${authError.message}`);
                 return;
             }
-            setMatchId(matchData.id);
+
+            if (authData) {
+                console.log(name);
+                const { data:matchData, error:matchError } = await supabase.from('match').insert({
+                    player_x_name: name,
+                })
+                .select('id')
+                .single();
+
+                if (matchError) {
+                    console.error(matchError);
+                    setError(`Failed to create room: ${matchError.message}`);
+                    return;
+                }
+
+                setPlayerSign('X');
+                setMatchId(matchData.id);
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            setError('Cannot connect to Supabase. Please check your configuration.');
+            return;
         }
-
-
     }
 
-    const handleMultiplayerMove = async (board: (TurnValue | null)[]) => {
-        console.log('multiplayer move', board);
-        if(!matchId) return;
+    const handleMultiplayerMove = async (index: number) => {
+        if(!matchId || winner) return;
 
-        const { data: matchData, error: matchError } = await supabase.from('match').update({
-            board: board
-        }).eq('id', matchId).select('board').single();
+        if(playerSign !== (turn === TURNS.X ? 'X' : 'O')) {
+            setError('It\'s not your turn');
+            return;
+        }
+        
+        setError(null);
+        
+        // check if it's the current player's turn
+        if (board[index] !== null) return;
 
+        const newBoard = [...board];
+        const newMovesHistory = [...movesHistory];
+        
+        if (newMovesHistory.length >= MAX_MOVES) {
+            const oldIndex = newMovesHistory[0];
+            newBoard[oldIndex] = null;
+            newMovesHistory.shift();
+        }
+        
+        newBoard[index] = playerSign === 'X' ? TURNS.X : TURNS.O;
+        newMovesHistory.push(index);
+        
+        // check winner
+        const gameWinner = checkWinner(newBoard);
+        
+        // update states
+        setBoard(newBoard);
+        setMovesHistory(newMovesHistory);
+        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
 
-        if (matchError) {
-            console.error(matchError);
-            return;   
+        if (gameWinner) {
+            setWinner(gameWinner as TurnValue);
         }
 
-        if (matchData) {
-            console.log(matchData);
+        const formattedBoard = newBoard.map((cell) => cell === TURNS.X ? 'X' : cell === TURNS.O ? 'O' : null);
+        
+        // sync to database - the realtime subscription will handle notifying other players
+        const { error: matchError } = await supabase.from('match').update({
+            board: formattedBoard,
+            winner: gameWinner,
+            turn: turn === TURNS.X ? 'O' : 'X'
+        }).eq('id', matchId).select().single();
+
+        if (matchError) {
+            console.error('Database update error:', matchError);
+            return;   
         }
     }
 
@@ -140,7 +195,14 @@ useEffect(() =>{
                 {error && <p className="text-red-500">{error}</p>}
             </form>
 
-            <Board isMultiplayer={true} matchId={matchId} onMultiplayerMove={handleMultiplayerMove} />
+            <Board 
+                isMultiplayer={true} 
+                onMultiplayerMove={handleMultiplayerMove}
+                board={board}
+                turn={turn}
+                movesHistory={movesHistory}
+                winner={winner}
+            />
         </>
     )
 }
