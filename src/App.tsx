@@ -1,6 +1,5 @@
 import './App.css'
 import Multiplayer from './components/multiplayer/Multiplayer'
-import Board from './components/game/Board'
 
 function App() {
 
