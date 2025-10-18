@@ -1,12 +1,15 @@
 import './App.css'
+import Multiplayer from './components/multiplayer/Multiplayer'
 import Board from './components/game/Board'
 
 function App() {
 
   return (
     <main className="flex flex-col items-center justify-center h-screen gap-10">      
-      <h1>Tik Tak Tok</h1>
-      <Board />
+    {/* then allow local and multiplayer, right now only multiplayer */}
+      <Multiplayer />
+
+      <Board isMultiplayer={false} matchId={null} onMultiplayerMove={() => {}} />
     </main>
   )
 }

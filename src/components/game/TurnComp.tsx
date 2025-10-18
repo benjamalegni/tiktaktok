@@ -1,4 +1,4 @@
-import { Square } from "./Board";
+import { Square } from "./Square";
 import { TURNS } from "../../lib/types";
 
 export default function TurnComp({ turn }: { turn: string }) {

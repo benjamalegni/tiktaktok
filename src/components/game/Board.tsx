@@ -1,24 +1,26 @@
 import { useState, useEffect } from 'react'
-import { TURNS, WINNER_COMBINATIONS } from '../../lib/types'
+import { TURNS, type TurnValue } from '../../lib/types'
 import TurnComp from './TurnComp';
+import { Square } from './Square';
+import { referee, checkWinner } from '../../logic/board';
+import { Winner } from './Winner';
 
-const MAX_MOVES = 6;
+export const MAX_MOVES = 6;
 
-export function Square({children, handleClick, index, isSelected}: {children?: React.ReactNode, handleClick?: (index: number) => void, index?: number, isSelected: boolean}) {
-    return (
-            <div onClick={()=>handleClick?.(index!)} className={`w-20 h-20 bg-white text-black text-8xl font-bold flex items-center justify-center cursor-pointer ${isSelected ? `bg-white border-6 border-cyan-500` : ``}`}>
-                {children}
-            </div>
-    )
-}
 
-export default function Board() {
+interface BoardProps{
+        isMultiplayer: boolean;
+        matchId: string | null;
+        onMultiplayerMove: (board: (TurnValue | null)[]) => void;
+    }
+
+export default function Board({ isMultiplayer, matchId, onMultiplayerMove }: BoardProps) {
 
     const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
     const [turn, setTurn] = useState<string>(TURNS.X);
 
     const [movesHistory, setMovesHistory] = useState<number[]>([]);
-    const [winner, setWinner] = useState<string | null>(null);
+    const [winner, setWinner] = useState<TurnValue | null>(null);
 
     // log movements history
     useEffect(() =>{
@@ -26,48 +28,58 @@ export default function Board() {
     }, [movesHistory]);
 
 
-    const checkWinner = (board: (string | null)[]) =>{
-        for(const combination of WINNER_COMBINATIONS){
-            const [a, b, c] = combination;
-            if(board[a] && board[a] === board[b] && board[a] === board[c]){
-                return board[a];
-            }
-        }
-        return null;
-    }
-
-
     const handleClick = (index: number) => {
-        if(board[index] !== null){
+        if (winner) {
             return;
         }
 
-        if(winner){
-            return;
+        if(isMultiplayer){
+            // Crear una copia del board para simular el movimiento
+            const newBoard = [...board];
+            const newMovesHistory = [...movesHistory];
+            
+            // Verificar si la casilla está ocupada
+            if (newBoard[index] !== null) {
+                return;
+            }
+            
+            // Aplicar el movimiento
+            if (newMovesHistory.length >= MAX_MOVES) {
+                const oldIndex = newMovesHistory[0];
+                newBoard[oldIndex] = null;
+                newMovesHistory.shift();
+            }
+            
+            newBoard[index] = turn as TurnValue;
+            newMovesHistory.push(index);
+            
+            // Actualizar el estado local
+            setMovesHistory(newMovesHistory);
+            setBoard(newBoard);
+            
+            // Verificar ganador
+            const winner = checkWinner(newBoard);
+            if (winner) {
+                setWinner(winner as TurnValue | null);
+            } else {
+                setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
+            }
+            
+            // Sincronizar con la base de datos
+            onMultiplayerMove(newBoard as (TurnValue | null)[]);
+
+        } else{
+            referee(
+                board as (TurnValue | null)[], 
+                index, 
+                movesHistory, 
+                setMovesHistory, 
+                setBoard, 
+                setWinner, 
+                setTurn, 
+                turn as TurnValue
+            ); 
         }
-
-        let newBoard = [...board];
-        let newMovesHistory = [...movesHistory];       
-
-        if (movesHistory.length >= MAX_MOVES) {
-            const oldIndex = newMovesHistory[0];
-            newBoard[oldIndex] = null;
-            newMovesHistory = newMovesHistory.slice(1);
-        }
-
-        newBoard[index] = turn;
-        newMovesHistory.push(index);
-
-
-        setMovesHistory(newMovesHistory);
-        setBoard(newBoard);
-
-        if(checkWinner(newBoard)){
-            console.log('winner', checkWinner(newBoard));
-            setWinner(checkWinner(newBoard));
-        }
-
-        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
     }
 
     return (
@@ -85,27 +97,13 @@ export default function Board() {
                 ))}
             </section>
 
-
             <section>
                 <TurnComp turn={turn} />
             </section>
-
-
-            {winner && (
-                <>
-                    <section>
-                        <h2>Winner: {winner}</h2>
-                    </section>
-                    <button className="flex flex-row gap-10 mt-20" onClick={() => {
-                        setBoard(Array(9).fill(null));
-                        setMovesHistory([]);
-                        setWinner(null);
-                    }}>
-                        Clear
-                    </button>
-                </>
-            )}
-
+            
+            {winner && 
+                <Winner winner={winner} setBoard={setBoard} setMovesHistory={setMovesHistory} setWinner={setWinner}/>
+            }
         </div>
     )
 }
