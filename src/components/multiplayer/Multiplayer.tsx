@@ -150,10 +150,6 @@ export default function Multiplayer() {
         // check winner
         const gameWinner = checkWinner(newBoard);
         
-        // update states
-        setBoard(newBoard);
-        setMovesHistory(newMovesHistory);
-        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
 
         if (gameWinner) {
             setWinner(gameWinner as TurnValue);
@@ -168,10 +164,18 @@ export default function Multiplayer() {
             turn: turn === TURNS.X ? 'O' : 'X'
         }).eq('id', matchId).select().single();
 
+
         if (matchError) {
             console.error('Database update error:', matchError);
             return;   
         }
+
+        // update states
+        setBoard(newBoard);
+        setMovesHistory(newMovesHistory);
+        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
+
+        if(gameWinner) setWinner(gameWinner as TurnValue);
     }
 
 
