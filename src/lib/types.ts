@@ -1,6 +1,6 @@
 export const TURNS = {
     X: '×',
-    O: '●'
+    O: '○'
 } as const;
 
 export type TurnValue = typeof TURNS[keyof typeof TURNS];

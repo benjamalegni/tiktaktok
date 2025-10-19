@@ -1,8 +1,8 @@
 import { supabase } from '../../utils/supabase.ts'
 import { useEffect, useState } from 'react';
-import { TURNS, type TurnValue, MAX_MOVES } from '../../lib/types';
+import { TURNS, type TurnValue } from '../../lib/types';
 import Board from '../game/Board.tsx';
-import { checkWinner } from '../../logic/board.ts';
+import { handleJoinRoom, handleCreateRoom, handleMultiplayerMove } from './multiplayer_logic.ts';
 
 export default function Multiplayer() {
 
@@ -67,127 +67,6 @@ export default function Multiplayer() {
     }, [matchId]);
 
 
-    const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>) => {
-
-        e.preventDefault();
-        const { data: gameData, error: gameError } = await supabase.from('match')
-        .update({player_o_name: name, status: 'active'})
-        .eq('id', roomCode)
-        .select()
-        .single();
-
-        if (gameError) {
-            console.error(gameError);
-            setError("The room code is invalid");
-            return;
-        }
-
-        if (gameData) {
-            setPlayerSign('O');
-            setMatchId(roomCode);
-            return;
-        }
-    }
-
-
-    const handleCreateRoom = async (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        if(!name) {
-            setError("Your name is required to play");
-            return;
-        } else{
-            setError(null);
-        }
-
-        try {
-            const {data:authData, error: authError} = await supabase.auth.signInAnonymously();
-
-            if (authError) {
-                console.error('Auth error:', authError);
-                setError(`Authentication failed: ${authError.message}`);
-                return;
-            }
-
-            if (authData) {
-                const { data:matchData, error:matchError } = await supabase.from('match').insert({
-                    player_x_name: name,
-                    status: 'active'
-                })
-                .select('id')
-                .single();
-
-                if (matchError) {
-                    console.error(matchError);
-                    setError(`Failed to create room: ${matchError.message}`);
-                    return;
-                }
-
-                setPlayerSign('X');
-                setMatchId(matchData.id);
-            }
-        } catch (error) {
-            console.error('Network error:', error);
-            setError('Cannot connect to Supabase. Please check your configuration.');
-            return;
-        }
-    }
-
-    const handleMultiplayerMove = async (index: number) => {
-        if(!matchId || winner) return;
-
-        if(playerSign !== (turn === TURNS.X ? 'X' : 'O')) {
-            setError('It\'s not your turn');
-            return;
-        }
-        
-        setError(null);
-        
-        // check if it's the current player's turn
-        if (board[index] !== null) return;
-
-        const newBoard = [...board];
-        let newMovesHistory = [...movesHistory];
-        
-        newBoard[index] = playerSign === 'X' ? TURNS.X : TURNS.O;
-        newMovesHistory.push(index);
-
-
-        if (newMovesHistory.length > MAX_MOVES) {
-            const oldIndex = newMovesHistory[0];
-            newBoard[oldIndex] = null;
-            newMovesHistory = newMovesHistory.slice(1);
-        }
-    
-        // check winner
-        const gameWinner = checkWinner(newBoard);
-        
-        const nextTurn = turn === TURNS.X ? TURNS.O : TURNS.X;
-        const formattedBoard = newBoard.map((cell) => cell === TURNS.X ? 'X' : cell === TURNS.O ? 'O' : null);
-        
-        // update states
-        setMovesHistory(newMovesHistory);
-        setBoard(newBoard);
-        setTurn(nextTurn);
-
-        // sync to database - the realtime subscription will handle notifying other players
-        const { error: matchError } = await supabase.from('match').update({
-            board: formattedBoard,
-            moves_history: newMovesHistory,
-            winner: gameWinner,
-            turn: nextTurn === TURNS.X ? 'X' : 'O',
-        }).eq('id', matchId).select().single();
-
-
-        if (matchError) {
-            console.error('Database update error:', matchError);
-            return;   
-        }
-
-
-        if(gameWinner) setWinner(gameWinner as TurnValue);
-    }
-
-
     return (
         <>
             <form className="flex flex-col gap-10"> 
@@ -195,8 +74,8 @@ export default function Multiplayer() {
                 <input type="text" placeholder="room code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
 
                 <div className="flex flex-row gap-10">
-                    <button type="button" onClick={(e) => {handleJoinRoom(e)}}>Join Game</button>
-                    <button type="button" onClick={(e) => {handleCreateRoom(e)}}>Create Room</button>
+                    <button type="button" onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId)}}>Join Game</button>
+                    <button type="button" onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
                 </div>
 
                 {matchId && <p>Match ID: {matchId}</p>}
@@ -205,7 +84,7 @@ export default function Multiplayer() {
 
             <Board 
                 isMultiplayer={true} 
-                onMultiplayerMove={handleMultiplayerMove}
+                onMultiplayerMove={(index) => {handleMultiplayerMove(index, matchId, playerSign, turn, board, movesHistory, setError, setBoard, setMovesHistory, setTurn, setWinner)}}
                 board={board}
                 turn={turn}
                 movesHistory={movesHistory}
