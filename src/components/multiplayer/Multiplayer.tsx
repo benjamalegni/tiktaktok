@@ -33,10 +33,19 @@ export default function Multiplayer() {
                 (payload) => {
                     // update states if the change comes from another player
                     if (payload.new.board) {
-                        const formattedBoard = payload.new.board.map((cell: string) => 
-                            cell === 'X' ? TURNS.X : cell === 'O' ? TURNS.O : null
-                        );
-                        setBoard(formattedBoard);
+                        if(error) setError(null);                       
+                        
+                        // convert board from string to TurnValue
+                        const convertedBoard = payload.new.board.map((cell: string | null) => {
+                            if (cell === 'X') return TURNS.X;
+                            if (cell === 'O') return TURNS.O;
+                            return null;
+                        });
+                        
+                        setBoard(convertedBoard);
+                    }
+                    if(payload.new.moves_history) {
+                        setMovesHistory(payload.new.moves_history);
                     }
                     
                     if (payload.new.winner) {
@@ -80,6 +89,7 @@ export default function Multiplayer() {
         }
     }
 
+
     const handleCreateRoom = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if(!name) {
@@ -99,9 +109,9 @@ export default function Multiplayer() {
             }
 
             if (authData) {
-                console.log(name);
                 const { data:matchData, error:matchError } = await supabase.from('match').insert({
                     player_x_name: name,
+                    status: 'active'
                 })
                 .select('id')
                 .single();
@@ -138,35 +148,33 @@ export default function Multiplayer() {
         const newBoard = [...board];
         let newMovesHistory = [...movesHistory];
         
-        if (newMovesHistory.length >= MAX_MOVES) {
+        newBoard[index] = playerSign === 'X' ? TURNS.X : TURNS.O;
+        newMovesHistory.push(index);
+
+
+        if (newMovesHistory.length > MAX_MOVES) {
             const oldIndex = newMovesHistory[0];
             newBoard[oldIndex] = null;
             newMovesHistory = newMovesHistory.slice(1);
         }
-        
-        newBoard[index] = playerSign === 'X' ? TURNS.X : TURNS.O;
-        newMovesHistory.push(index);
-        
+    
         // check winner
         const gameWinner = checkWinner(newBoard);
         
-
-        if (gameWinner) {
-            setWinner(gameWinner as TurnValue);
-        }
-
+        const nextTurn = turn === TURNS.X ? TURNS.O : TURNS.X;
         const formattedBoard = newBoard.map((cell) => cell === TURNS.X ? 'X' : cell === TURNS.O ? 'O' : null);
         
         // update states
-        setBoard(newBoard);
         setMovesHistory(newMovesHistory);
-        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
+        setBoard(newBoard);
+        setTurn(nextTurn);
 
         // sync to database - the realtime subscription will handle notifying other players
         const { error: matchError } = await supabase.from('match').update({
             board: formattedBoard,
+            moves_history: newMovesHistory,
             winner: gameWinner,
-            turn: turn === TURNS.X ? 'O' : 'X'
+            turn: nextTurn === TURNS.X ? 'X' : 'O',
         }).eq('id', matchId).select().single();
 
 
@@ -178,7 +186,6 @@ export default function Multiplayer() {
 
         if(gameWinner) setWinner(gameWinner as TurnValue);
     }
-
 
 
     return (
