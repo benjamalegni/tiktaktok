@@ -1,7 +1,7 @@
 import { supabase } from '../../utils/supabase.ts'
 import { useEffect, useState } from 'react';
-import { TURNS, type TurnValue } from '../../lib/types';
-import Board, { MAX_MOVES } from '../game/Board.tsx';
+import { TURNS, type TurnValue, MAX_MOVES } from '../../lib/types';
+import Board from '../game/Board.tsx';
 import { checkWinner } from '../../logic/board.ts';
 
 export default function Multiplayer() {
@@ -141,7 +141,7 @@ export default function Multiplayer() {
         if (newMovesHistory.length >= MAX_MOVES) {
             const oldIndex = newMovesHistory[0];
             newBoard[oldIndex] = null;
-            newMovesHistory.shift();
+            newMovesHistory.slice(1);
         }
         
         newBoard[index] = playerSign === 'X' ? TURNS.X : TURNS.O;
