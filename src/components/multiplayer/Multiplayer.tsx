@@ -136,12 +136,12 @@ export default function Multiplayer() {
         if (board[index] !== null) return;
 
         const newBoard = [...board];
-        const newMovesHistory = [...movesHistory];
+        let newMovesHistory = [...movesHistory];
         
         if (newMovesHistory.length >= MAX_MOVES) {
             const oldIndex = newMovesHistory[0];
             newBoard[oldIndex] = null;
-            newMovesHistory.slice(1);
+            newMovesHistory = newMovesHistory.slice(1);
         }
         
         newBoard[index] = playerSign === 'X' ? TURNS.X : TURNS.O;
@@ -157,6 +157,11 @@ export default function Multiplayer() {
 
         const formattedBoard = newBoard.map((cell) => cell === TURNS.X ? 'X' : cell === TURNS.O ? 'O' : null);
         
+        // update states
+        setBoard(newBoard);
+        setMovesHistory(newMovesHistory);
+        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
+
         // sync to database - the realtime subscription will handle notifying other players
         const { error: matchError } = await supabase.from('match').update({
             board: formattedBoard,
@@ -170,10 +175,6 @@ export default function Multiplayer() {
             return;   
         }
 
-        // update states
-        setBoard(newBoard);
-        setMovesHistory(newMovesHistory);
-        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
 
         if(gameWinner) setWinner(gameWinner as TurnValue);
     }
