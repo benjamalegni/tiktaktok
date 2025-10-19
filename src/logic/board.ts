@@ -21,7 +21,7 @@ export const referee = (
             return;
         }
 
-        let newBoard = [...board];
+        const newBoard = [...board];
         let newMovesHistory = [...movesHistory];       
 
         if (movesHistory.length >= MAX_MOVES) {
