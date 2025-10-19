@@ -5,6 +5,8 @@ export const TURNS = {
 
 export type TurnValue = typeof TURNS[keyof typeof TURNS];
 
+export const MAX_MOVES = 6;
+
 export const WINNER_COMBINATIONS = [
     [0, 1, 2],
     [3, 4, 5],
