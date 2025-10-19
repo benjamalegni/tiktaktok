@@ -1,6 +1,6 @@
 import { supabase } from '../../utils/supabase.ts'
 import { useEffect, useState } from 'react';
-import { TURNS, type MatchStatus, type TurnValue } from '../../lib/types';
+import { TURNS, type TurnValue } from '../../lib/types';
 import Board, { MAX_MOVES } from '../game/Board.tsx';
 import { checkWinner } from '../../logic/board.ts';
 
@@ -17,10 +17,6 @@ export default function Multiplayer() {
     const [movesHistory, setMovesHistory] = useState<number[]>([]);
     const [winner, setWinner] = useState<TurnValue | null>(null);
     const [playerSign, setPlayerSign] = useState<string | null>(null);
-
-    const changeTurn = (turn: TurnValue) => {
-        setTurn(turn === TURNS.X ? TURNS.O : TURNS.X);
-    }
 
     useEffect(() => {
         if (!matchId) return;
