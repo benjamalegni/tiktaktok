@@ -1,6 +1,6 @@
 import { supabase } from '../../utils/supabase.ts'
 import { useEffect, useState } from 'react';
-import { TURNS, type TurnValue } from '../../lib/types';
+import { TURNS, type TurnValue, MAX_MOVES } from '../../lib/types';
 import Board from '../game/Board.tsx';
 import { handleJoinRoom, handleCreateRoom, handleMultiplayerMove } from './multiplayer_logic.ts';
 
@@ -69,27 +69,31 @@ export default function Multiplayer() {
 
     return (
         <>
-            <form className="flex flex-col gap-10"> 
-                <input type="text" placeholder="your name" name="name" onChange={(e) => {setName(e.target.value)}} />
-                <input type="text" placeholder="room code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
+
+            <form className="flex flex-col gap-2 border-2  border-gray-300 rounded-md p-10 backdrop-blur-sm" style={{fontFamily: 'Bungee, cursive'}}> 
+                <span className="text-2xl font-bold"></span>
+
+                <input className="border-2 border-gray-300 rounded-md p-2" style={{fontFamily: 'Bungee, cursive'}} type="text" placeholder="your name" name="name" onChange={(e) => {setName(e.target.value)}} />
+                <input className="border-2 border-gray-300 rounded-md p-2" style={{fontFamily: 'Bungee, cursive'}} type="text" placeholder="room code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
 
                 <div className="flex flex-row gap-10">
-                    <button type="button" onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId)}}>Join Game</button>
-                    <button type="button" onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
+                    <button type="button" style={{fontFamily: 'Bungee, cursive'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn)}}>Join Game</button>
+                    <button type="button" style={{fontFamily: 'Bungee, cursive'}} onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
                 </div>
 
-                {matchId && <p>Match ID: {matchId}</p>}
-                {error && <p className="text-red-500">{error}</p>}
+                {matchId && <p style={{fontFamily: 'Bungee, cursive'}}>Match ID: {matchId}</p>}
+                {error && <p className="text-red-500" style={{fontFamily: 'Bungee, cursive'}}>{error}</p>}
             </form>
 
-            <Board 
+            
+            {matchId && <Board 
                 isMultiplayer={true} 
                 onMultiplayerMove={(index) => {handleMultiplayerMove(index, matchId, playerSign, turn, board, movesHistory, setError, setBoard, setMovesHistory, setTurn, setWinner)}}
                 board={board}
                 turn={turn}
                 movesHistory={movesHistory}
                 winner={winner}
-            />
+            />}
         </>
     )
 }

@@ -1,3 +1,5 @@
+import { X } from 'lucide-react';
+
 export const TURNS = {
     X: '×',
     O: '○'

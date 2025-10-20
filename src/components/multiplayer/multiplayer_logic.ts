@@ -2,7 +2,7 @@ import { MAX_MOVES, TURNS, type TurnValue } from "../../lib/types";
 import { checkWinner } from "../../logic/board";
 import { supabase } from "../../utils/supabase";
 
-export const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>, roomCode: string, name: string, setError: (error: string | null) => void, setPlayerSign: (playerSign: string) => void, setMatchId: (matchId: string) => void) => {
+export const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>, roomCode: string, name: string, setError: (error: string | null) => void, setPlayerSign: (playerSign: string) => void, setMatchId: (matchId: string) => void, setBoard: (board: (TurnValue | null)[]) => void, setMovesHistory: (movesHistory: number[]) => void, setTurn: (turn: TurnValue) => void) => {
         e.preventDefault();
 
         if(!name) {
@@ -25,6 +25,9 @@ export const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>, roo
         if (gameData) {
             setPlayerSign('O');
             setMatchId(roomCode);
+            setBoard(gameData.board.map((cell) => cell === 'X' ? TURNS.X : cell === 'O' ? TURNS.O : null));
+            setMovesHistory(gameData.moves_history);
+            setTurn(gameData.turn === 'X' ? TURNS.X : TURNS.O);
             return;
         }
     }

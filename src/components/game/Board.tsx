@@ -7,7 +7,6 @@ import { Winner } from './Winner';
 
 export const MAX_MOVES = 6;
 
-
 interface BoardProps{
         isMultiplayer: boolean;
         onMultiplayerMove: (index: number) => void;

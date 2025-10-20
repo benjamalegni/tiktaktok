@@ -1,4 +1,4 @@
-import { MAX_MOVES } from "../components/game/Board";
+import { MAX_MOVES } from "../lib/types";
 import { WINNER_COMBINATIONS, type TurnValue } from "../lib/types";
 
 export const checkWinner = (board: (string | null)[]) =>{
