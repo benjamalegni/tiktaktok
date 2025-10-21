@@ -1,5 +1,3 @@
-import { X } from 'lucide-react';
-
 export const TURNS = {
     X: '×',
     O: '○'
@@ -29,3 +27,9 @@ export const WINNER_COMBINATIONS = [
 } as const;
 
 export type MatchStatus = typeof MatchStatus[keyof typeof MatchStatus];
+
+export const musicPlaylist = [
+  '/sounds/music/tiktaktok-theme.mp3',
+  '/sounds/music/tiktaktok-menu1.mp3',
+  '/sounds/music/tiktaktok-menu2.webm',
+]

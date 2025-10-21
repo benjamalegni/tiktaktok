@@ -1,8 +1,10 @@
 import { supabase } from '../../utils/supabase.ts'
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { TURNS, type TurnValue, MAX_MOVES } from '../../lib/types';
 import Board from '../game/Board.tsx';
 import { handleJoinRoom, handleCreateRoom, handleMultiplayerMove } from './multiplayer_logic.ts';
+import { linearGradient } from 'framer-motion/client';
 
 export default function Multiplayer() {
 
@@ -66,34 +68,56 @@ export default function Multiplayer() {
         };
     }, [matchId]);
 
-
     return (
-        <>
+        <div
+        style={{minHeight: '100dvh',
+      width: '100%',
+      backgroundImage: "url('/monkeys-bg.png')",
+      backgroundSize: 'cover',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center center',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+        }}
+        >
+            <div
+            >
+                <form
+                    className="border-rounded-lg"
+                    style={{
+                        fontFamily: 'Bungee, cursive',
+                        borderRadius: '10px',
+                        boxShadow: '0 0 20px 0 rgba(0, 0, 0, 0.9)'
+                    }}
+                > 
+                    <div style={{ background: 'rgba(0, 0, 0, 0.9)', borderRadius: '10px'}} className="flex flex-col gap-8 p-10">
+                        <span style={{fontFamily: 'Neuland, cursive', color: 'rgb(251, 255, 9)' }} className="text-8xl font-bold">
+                            Welcome! 
+                        </span>
 
-            <form className="flex flex-col gap-2 border-2  border-gray-300 rounded-md p-10 backdrop-blur-sm" style={{fontFamily: 'Bungee, cursive'}}> 
-                <span className="text-2xl font-bold"></span>
+                        <input className=" p-2 text-lg bg-black/30" style={{fontFamily: 'Neuland, cursive'}} type="text" placeholder="Name" name="name" onChange={(e) => {setName(e.target.value)}} />
+                        <input className="p-2 text-lg bg-black/30" style={{fontFamily: 'Neuland, cursive'}} type="text" placeholder="Code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
 
-                <input className="border-2 border-gray-300 rounded-md p-2" style={{fontFamily: 'Bungee, cursive'}} type="text" placeholder="your name" name="name" onChange={(e) => {setName(e.target.value)}} />
-                <input className="border-2 border-gray-300 rounded-md p-2" style={{fontFamily: 'Bungee, cursive'}} type="text" placeholder="room code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
+                        <div className="flex flex-row gap-10">
+                            <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(251, 255, 9)', color: 'black'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn)}}>Join Game</button>
+                            <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(17, 124, 0)', color: 'black'}} onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
+                        </div>
 
-                <div className="flex flex-row gap-10">
-                    <button type="button" style={{fontFamily: 'Bungee, cursive'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn)}}>Join Game</button>
-                    <button type="button" style={{fontFamily: 'Bungee, cursive'}} onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
-                </div>
+                        {matchId && <p style={{fontFamily: 'Bungee, cursive'}}>Match ID: {matchId}</p>}
+                        {error && <p className="text-red-500" style={{fontFamily: 'Bungee, cursive'}}>{error}</p>}
+                    </div>
+                </form>
 
-                {matchId && <p style={{fontFamily: 'Bungee, cursive'}}>Match ID: {matchId}</p>}
-                {error && <p className="text-red-500" style={{fontFamily: 'Bungee, cursive'}}>{error}</p>}
-            </form>
-
-            
-            {matchId && <Board 
-                isMultiplayer={true} 
-                onMultiplayerMove={(index) => {handleMultiplayerMove(index, matchId, playerSign, turn, board, movesHistory, setError, setBoard, setMovesHistory, setTurn, setWinner)}}
-                board={board}
-                turn={turn}
-                movesHistory={movesHistory}
-                winner={winner}
-            />}
-        </>
+                {matchId && <Board 
+                    isMultiplayer={true} 
+                    onMultiplayerMove={(index) => {handleMultiplayerMove(index, matchId, playerSign, turn, board, movesHistory, setError, setBoard, setMovesHistory, setTurn, setWinner)}}
+                    board={board}
+                    turn={turn}
+                    movesHistory={movesHistory}
+                    winner={winner}
+                />}
+            </div>
+        </div>
     )
 }
