@@ -2,16 +2,16 @@ import './App.css'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import Multiplayer from './components/multiplayer/Multiplayer'
-import { musicPlayer } from './hooks/usePlaylistMusic'
+import { usePlaylistMusic } from './hooks/usePlaylistMusic'
 import { VolumeControl } from './components/menu/VolumeControl'
 import { musicPlaylist } from './lib/types'
 import {motion} from 'framer-motion'
-import Board from './components/game/Board'
+// import Board from './components/game/Board' // unused here
 
 function App() {
   const navigate = useNavigate();
   
-  const { play, pause, setVolume, volume, hasPlayed } = musicPlayer(musicPlaylist, {
+  const { play, pause, setVolume, volume, hasPlayed } = usePlaylistMusic(musicPlaylist, {
     volume: 1,
   });
 

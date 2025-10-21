@@ -1,7 +1,6 @@
 import { MAX_MOVES, TURNS, type TurnValue } from "../../lib/types";
 import { checkWinner } from "../../logic/board";
 import { supabase } from "../../utils/supabase";
-import { useNavigate } from "react-router-dom";
 
 
 export const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>, roomCode: string, name: string, setError: (error: string | null) => void, setPlayerSign: (playerSign: string) => void, setMatchId: (matchId: string) => void, setBoard: (board: (TurnValue | null)[]) => void, setMovesHistory: (movesHistory: number[]) => void, setTurn: (turn: TurnValue) => void) => {
@@ -30,10 +29,6 @@ export const handleJoinRoom = async (e: React.MouseEvent<HTMLButtonElement>, roo
             setBoard(gameData.board.map((cell) => cell === 'X' ? TURNS.X : cell === 'O' ? TURNS.O : null));
             setMovesHistory(gameData.moves_history);
             setTurn(gameData.turn === 'X' ? TURNS.X : TURNS.O);
-            
-            setTimeout(() => {
-                navigate('/game/Board');
-            }, 1000);
             return;
         }
     }

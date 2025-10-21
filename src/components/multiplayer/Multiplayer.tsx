@@ -35,7 +35,8 @@ export default function Multiplayer() {
                 (payload) => {
                     // update states if the change comes from another player
                     if (payload.new.board) {
-                        if(error) setError(null);                       
+                        // clear any prior error on valid update
+                        setError(null);
                         
                         // convert board from string to TurnValue
                         const convertedBoard = payload.new.board.map((cell: string | null) => {

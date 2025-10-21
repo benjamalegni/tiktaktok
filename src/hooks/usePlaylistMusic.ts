@@ -7,7 +7,7 @@ interface PlaylistMusicOptions {
 // Keep the export name you are using in App.tsx.
 // If you're importing musicPlayer, export it as musicPlayer.
 // If you're importing usePlaylistMusic, rename accordingly.
-export const musicPlayer = (
+export const usePlaylistMusic = (
   playlist: string[],
   options: PlaylistMusicOptions = {}
 ) => {
@@ -113,8 +113,9 @@ export const musicPlayer = (
         });
       }
       await a.play();
-    } catch (err: any) {
-      if (err?.name !== 'AbortError') console.error('Error playing music:', err);
+    } catch (err: unknown) {
+      const e = err as { name?: string } | undefined;
+      if (e?.name !== 'AbortError') console.error('Error playing music:', err);
     }
   }, [playlist.length, volume]);
 
