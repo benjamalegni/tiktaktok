@@ -66,8 +66,8 @@ export default function Board({
     }
 
     return (
-        <div className="flex flex-col items-center justify-center">
-            <section className="grid grid-cols-3 grid-rows-3 gap-10 border-10 border-white">
+        <div className="flex flex-col items-center justify-center" >
+            <section className="grid grid-cols-3 grid-rows-3 gap-10 border-10 border-white"style={{backgroundImage: 'url(/dark-bg.png)', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundPosition: 'center center', boxShadow: '0 0 20px 0 rgba(0, 0, 0, 0.9)'}}>
                 {currentBoard.map((_, index) => (
                     <Square 
                     index={index}
@@ -87,6 +87,7 @@ export default function Board({
             {currentWinner && 
                 <Winner winner={currentWinner} setBoard={setBoard} setMovesHistory={setMovesHistory} setWinner={setWinner}/>
             }
+
         </div>
     )
 }

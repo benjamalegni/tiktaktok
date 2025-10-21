@@ -6,6 +6,7 @@ import { musicPlayer } from './hooks/usePlaylistMusic'
 import { VolumeControl } from './components/menu/VolumeControl'
 import { musicPlaylist } from './lib/types'
 import {motion} from 'framer-motion'
+import Board from './components/game/Board'
 
 function App() {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ function App() {
         </main>
       } />
       
-      <Route path="/multiplayer" element={<Multiplayer />} />
+      <Route path="/multiplayer/*" element={<Multiplayer />} />
     </Routes>
   )
 }
