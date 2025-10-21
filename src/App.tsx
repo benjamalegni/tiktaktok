@@ -69,7 +69,6 @@ function App() {
               style={{
                 filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
                 transition: 'filter 0.3s ease',
-                WebkitUserDrag: 'none',
                 userSelect: 'none',
                 pointerEvents: 'none'
               }}
