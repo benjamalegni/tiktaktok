@@ -34,6 +34,7 @@ function App() {
             initial={false}
             animate={flyUp ? { y: -1000 } : { y: [0, -10, 0] }}
             transition={flyUp ? { type: 'spring', stiffness: 400, damping: 32 } : { duration: 2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => {
               setFlyUp(true);
               setTimeout(() => navigate('/multiplayer'), 650);
@@ -52,13 +53,7 @@ function App() {
               WebkitTapHighlightColor: 'transparent',
               outline: 'none'
             }}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.currentTarget.style.transform = 'scale(0.95)';
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
+            
           >
             <img 
               className="full-width mt-15" 
