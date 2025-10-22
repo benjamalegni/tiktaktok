@@ -51,7 +51,8 @@ function App() {
               MozUserSelect: 'none',
               msUserSelect: 'none',
               WebkitTapHighlightColor: 'transparent',
-              outline: 'none'
+              outline: 'none',
+              transform: 'translateZ(0)'
             }}
             
           >
