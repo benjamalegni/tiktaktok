@@ -1,11 +1,11 @@
 import './App.css'
 import { Routes, Route, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import Multiplayer from './components/multiplayer/Multiplayer'
 import { usePlaylistMusic } from './hooks/usePlaylistMusic'
 import { VolumeControl } from './components/menu/VolumeControl'
 import { musicPlaylist } from './lib/types'
-import {motion} from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion'
 // import Board from './components/game/Board' // unused here
 
 function App() {
@@ -15,7 +15,13 @@ function App() {
     volume: 1,
   });
 
-  const [flyUp, setFlyUp] = useState(false);
+  const controls = useAnimation();
+  useEffect(() => {
+    controls.start({
+      y: [0, -14, 0],
+      transition: { duration: 2.2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
+    });
+  }, [controls]);
 
   return (
     <Routes>
@@ -32,11 +38,10 @@ function App() {
 
           <motion.button 
             initial={false}
-            animate={flyUp ? { y: -1000 } : { y: [0, -10, 0] }}
-            transition={flyUp ? { type: 'spring', stiffness: 400, damping: 32 } : { duration: 2, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+            animate={controls}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
-              setFlyUp(true);
+              controls.start({ y: -1000, transition: { type: 'spring', stiffness: 400, damping: 32 } });
               setTimeout(() => navigate('/multiplayer'), 650);
             }}
             className="clickable-logo-button"
@@ -52,7 +57,9 @@ function App() {
               msUserSelect: 'none',
               WebkitTapHighlightColor: 'transparent',
               outline: 'none',
-              transform: 'translateZ(0)'
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+              transition: 'none'
             }}
             
           >
