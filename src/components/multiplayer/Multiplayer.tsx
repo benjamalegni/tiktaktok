@@ -73,6 +73,16 @@ export default function Multiplayer() {
         };
     }, [matchId]);
 
+    const [copied, setCopied] = useState<boolean>(false);
+    const handleCopyMatchId = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        if (!matchId) return;
+        navigator.clipboard.writeText(matchId);
+
+        setCopied(true);
+    }
+
+
     const FormView = (
         <div
             style={{
@@ -88,15 +98,14 @@ export default function Multiplayer() {
             }}
         >
             <form
-                className="border-rounded-lg"
+                className="border-rounded-lg flex flex-col gap-8 p-10 bg-black/90 w-full max-w-lg lg:min-w-4xl md:min-w-2xl"
                 style={{
-                    fontFamily: 'Bungee, cursive',
+                    fontFamily: 'Neuland, cursive',
                     borderRadius: '10px',
                     boxShadow: '0 0 20px 0 rgba(0, 0, 0, 0.9)'
                 }}
             > 
-                <div style={{ background: 'rgba(0, 0, 0, 0.9)', borderRadius: '10px'}} className="flex flex-col gap-8 p-10">
-                    <span style={{fontFamily: 'Neuland, cursive', color: 'rgb(251, 255, 9)' }} className="text-8xl font-bold">
+                    <span style={{fontFamily: 'Neuland, cursive', color: 'rgb(251, 255, 9)' }} className="text-4xl sm:text-5xl lg:text-8xl font-bold text-center">
                         Multiplayer
                     </span>
 
@@ -104,13 +113,18 @@ export default function Multiplayer() {
                     <input className="p-2 text-lg bg-black/30" style={{fontFamily: 'Neuland, cursive'}} type="text" placeholder="Code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
 
                     <div className="flex flex-row gap-10">
-                        <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(251, 255, 9)', color: 'black'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn)}}>Join Game</button>
+                        <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(251, 255, 9)', color: 'black'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn, setGameStarted)}}>Join Game</button>
                         <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(17, 124, 0)', color: 'black'}} onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
                     </div>
 
-                    {matchId && <p style={{fontFamily: 'Neuland, cursive'}}>Match ID: {matchId}</p>}
+                    {matchId && 
+                    <div className="flex flex-row gap-10 items-center justify-center">
+                    <p style={{fontFamily: 'Neuland, cursive'}}>Party ID: {matchId}</p> 
+                    <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(251, 255, 9)', color: 'black'}} onClick={(e) => {handleCopyMatchId(e)}}>{copied? 'Copied' : 'Copy'}</button>
+                    </div>
+                    }
+
                     {error && <p className="text-red-500" style={{fontFamily: 'Neuland, cursive'}}>{error}</p>}
-                </div>
             </form>
         </div>
     );
