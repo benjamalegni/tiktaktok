@@ -113,7 +113,7 @@ export default function Multiplayer() {
                     <input className="p-2 text-lg bg-black/30" style={{fontFamily: 'Neuland, cursive'}} type="text" placeholder="Code" name="roomCode" onChange={(e) => {setRoomCode(e.target.value)}} />
 
                     <div className="flex flex-row gap-10">
-                        <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(251, 255, 9)', color: 'black'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn, setGameStarted)}}>Join Game</button>
+                        <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(251, 255, 9)', color: 'black'}} onClick={(e) => {handleJoinRoom(e, roomCode, name, setError, setPlayerSign, setMatchId, setBoard, setMovesHistory, setTurn)}}>Join Game</button>
                         <button type="button" style={{fontFamily: 'Neuland, cursive', backgroundColor: 'rgb(17, 124, 0)', color: 'black'}} onClick={(e) => {handleCreateRoom(e, name, setError, setPlayerSign, setMatchId)}}>Create Room</button>
                     </div>
 
@@ -132,8 +132,7 @@ export default function Multiplayer() {
     const GameView = matchId ? (
         <div className="mt-30">
         <Board 
-            isMultiplayer={true} 
-            onMultiplayerMove={(index) => {handleMultiplayerMove(index, matchId, playerSign, turn, board, movesHistory, setError, setBoard, setMovesHistory, setTurn, setWinner)}}
+            onMove={(index) => {handleMultiplayerMove(index, matchId, playerSign, turn, board, movesHistory, setError, setBoard, setMovesHistory, setTurn, setWinner)}}
             board={board}
             turn={turn}
             movesHistory={movesHistory}

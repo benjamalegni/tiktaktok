@@ -1,11 +1,11 @@
 import './App.css'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import Multiplayer from './components/multiplayer/Multiplayer'
 import { usePlaylistMusic } from './hooks/usePlaylistMusic'
 import { VolumeControl } from './components/menu/VolumeControl'
 import { musicPlaylist } from './lib/types'
 import { motion, useAnimation } from 'framer-motion'
+import ChooseGameMode from './components/menu/ChooseGameMode'
 // import Board from './components/game/Board' // unused here
 
 function App() {
@@ -42,7 +42,7 @@ function App() {
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               controls.start({ y: -1000, transition: { type: 'spring', stiffness: 400, damping: 32 } });
-              setTimeout(() => navigate('/multiplayer'), 650);
+              setTimeout(() => navigate('/menu'), 650);
             }}
             className="clickable-logo-button"
 
@@ -80,7 +80,7 @@ function App() {
         </main>
       } />
       
-      <Route path="/multiplayer/*" element={<Multiplayer />} />
+      <Route path="/menu/*" element={<ChooseGameMode />} />
     </Routes>
   )
 }

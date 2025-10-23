@@ -3,6 +3,9 @@ export const TURNS = {
     O: '○'
 } as const;
 
+export const ROWS = 3;
+export const COLUMNS = 3;
+
 export type TurnValue = typeof TURNS[keyof typeof TURNS];
 
 export const MAX_MOVES = 6;
