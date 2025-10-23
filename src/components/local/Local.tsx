@@ -3,7 +3,6 @@ import { TURNS, type TurnValue } from '../../lib/types';
 import Board, { MAX_MOVES } from '../game/Board';
 import { checkWinner } from '../../logic/board';
 import { getBestMove } from './computerAlgorithm';
-import { Winner } from '../game/Winner';
 
 export default function Local() {
     const [board, setBoard] = useState<(TurnValue | null)[]>(Array(9).fill(null));

@@ -1,4 +1,4 @@
-import { type TurnValue, ROWS, COLUMNS, TURNS } from "../../lib/types";
+import { type TurnValue, TURNS } from "../../lib/types";
 import { checkWinner } from "../../logic/board";
 
 function minimax(board: (TurnValue | null)[], depth: number, isMaximizing: boolean): number {
