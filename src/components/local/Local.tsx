@@ -48,8 +48,7 @@ export default function Local() {
     // AI's turn
     useEffect(() => {
         if (turn === TURNS.O && !winner) {
-            const timer = setTimeout(() => {
-                const computerMove = getBestMove([...board], false); // false = minimizing (playing as O)
+                const computerMove = getBestMove([...board], [...movesHistory], false); // false = minimizing (playing as O)
                 
                 if (computerMove !== -1) {
                     const newBoard = [...board];
@@ -79,9 +78,6 @@ export default function Local() {
                     setMovesHistory(newMovesHistory);
                     setTurn(TURNS.X); // Switch back to player turn
                 }
-            }, 50); // 50ms delay
-
-            return () => clearTimeout(timer);
         }
     }, [turn, winner]); // Removed board and movesHistory from dependencies
 
