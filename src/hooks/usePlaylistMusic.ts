@@ -4,130 +4,176 @@ interface PlaylistMusicOptions {
   volume?: number;
 }
 
-// Keep the export name you are using in App.tsx.
-// If you're importing musicPlayer, export it as musicPlayer.
-// If you're importing usePlaylistMusic, rename accordingly.
+// Helper: Normalize URL/path to pathname for comparison
+const toPathname = (src: string): string => {
+  try {
+    return new URL(src, window.location.origin).pathname;
+  } catch {
+    return src;
+  }
+};
+
+// Helper: Wait for audio to be ready to play
+const waitForAudioReady = (audio: HTMLAudioElement): Promise<void> => {
+  if (audio.readyState >= 2) {
+    return Promise.resolve();
+  }
+  
+  return new Promise<void>(resolve => {
+    const onReady = () => {
+      audio.removeEventListener('canplay', onReady);
+      resolve();
+    };
+    audio.addEventListener('canplay', onReady, { once: true });
+  });
+};
+
 export const usePlaylistMusic = (
   playlist: string[],
   options: PlaylistMusicOptions = {}
 ) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const shouldAutoPlayRef = useRef(false);
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolumeState] = useState(options.volume ?? 0);
   const [currentTrack, setCurrentTrack] = useState(0);
   const [hasPlayed, setHasPlayed] = useState(false);
 
-  // This ref ensures we only auto-play after a track change when appropriate
-  const shouldAutoPlayRef = useRef(false);
-
-  // Normalize a URL or path to pathname so absolute vs relative compare works
-  const toPathname = (src: string) => {
-    try {
-      return new URL(src, window.location.origin).pathname;
-    } catch {
-      return src;
-    }
-  };
-
-  // Initialize audio element and base listeners (only once)
+  // Initialize audio element and event listeners
   const initializeAudio = useCallback(() => {
-    if (!audioRef.current && playlist.length > 0) {
-      const a = new Audio();
-      a.preload = 'auto';
-      a.volume = volume;
-      a.muted = false;
+    if (audioRef.current || playlist.length === 0) return;
 
-      a.addEventListener('ended', () => {
-        // When a track ends, select next and mark we want to auto-play it
-        shouldAutoPlayRef.current = true;
-        setCurrentTrack(prev => (prev + 1) % playlist.length);
-      });
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.volume = volume;
+    audio.muted = false;
+    audio.src = playlist[0];
 
-      a.addEventListener('play', () => {
-        setIsPlaying(true);
-        setHasPlayed(true);
-      });
+    // Track ended: move to next track and auto-play
+    audio.addEventListener('ended', () => {
+      shouldAutoPlayRef.current = true;
+      setCurrentTrack(prev => (prev + 1) % playlist.length);
+    });
 
-      a.addEventListener('pause', () => {
-        setIsPlaying(false);
-      });
+    audio.addEventListener('play', () => {
+      setIsPlaying(true);
+      setHasPlayed(true);
+    });
 
-      a.src = playlist[0];
-      audioRef.current = a;
-    }
+    audio.addEventListener('pause', () => {
+      setIsPlaying(false);
+    });
+
+    audioRef.current = audio;
   }, [playlist, volume]);
 
-  // One-time init
+  // Initialize audio on mount
   useEffect(() => {
-    if (!audioRef.current && playlist.length > 0) {
-      initializeAudio();
-    }
-  }, [initializeAudio, playlist.length]);
+    initializeAudio();
+  }, [initializeAudio]);
 
-  // Handle track change: set src, then wait for canplay to call play once
+  // Handle track changes and auto-play
   useEffect(() => {
-    const a = audioRef.current;
-    if (!a || playlist.length === 0) return;
+    const audio = audioRef.current;
+    if (!audio || playlist.length === 0) return;
 
-    const currentPath = toPathname(a.src);
+    const currentPath = toPathname(audio.src);
     const newPath = toPathname(playlist[currentTrack]);
 
-    // Only change source if really different (avoid redundant loads)
+    // Only change source if track actually changed
     if (currentPath !== newPath) {
-      const wantAutoPlay = isPlaying || shouldAutoPlayRef.current;
+      const shouldAutoPlay = isPlaying || shouldAutoPlayRef.current;
       shouldAutoPlayRef.current = false;
 
       const handleCanPlay = () => {
-        // Only attempt to play after the new source is fully buffered enough
-        if (wantAutoPlay) {
-          a.play().catch(err => {
-            // Ignore AbortError (new load interrupted a pending play)
-            if (err?.name !== 'AbortError') console.error('play failed:', err);
+        if (shouldAutoPlay) {
+          audio.play().catch(err => {
+            if (err?.name !== 'AbortError') {
+              console.error('Auto-play failed:', err);
+            }
           });
         }
-        a.removeEventListener('canplay', handleCanPlay);
+        audio.removeEventListener('canplay', handleCanPlay);
       };
 
-      a.addEventListener('canplay', handleCanPlay);
-      a.src = playlist[currentTrack]; // this triggers loading; canplay will follow
+      audio.addEventListener('canplay', handleCanPlay);
+      audio.src = playlist[currentTrack];
     }
   }, [currentTrack, isPlaying, playlist]);
 
-  // Public controls
+  // Play audio: ensures correct volume and source before playing
   const play = useCallback(async () => {
-    const a = audioRef.current;
-    if (!a || playlist.length === 0) return;
+    const audio = audioRef.current;
+    if (!audio || playlist.length === 0) return;
+
+    // Check volume from audio element (setVolume updates it synchronously)
+    // This ensures we get correct volume even if setVolume was just called
+    if (audio.volume === 0) {
+      console.warn('Cannot play: volume is 0');
+      return;
+    }
 
     try {
-      a.muted = false;
-      a.volume = volume;
+      audio.muted = false;
 
-      // If not ready, wait for canplay once, then play
-      if (a.readyState < 2) {
-        await new Promise<void>(resolve => {
-          const onReady = () => {
-            a.removeEventListener('canplay', onReady);
-            resolve();
-          };
-          a.addEventListener('canplay', onReady, { once: true });
-        });
+      // Ensure source matches current track
+      const currentPath = toPathname(audio.src);
+      const newPath = toPathname(playlist[currentTrack]);
+      
+      if (currentPath !== newPath || !audio.src) {
+        audio.src = playlist[currentTrack];
+        await waitForAudioReady(audio);
       }
-      await a.play();
+
+      // Already playing - nothing to do
+      if (!audio.paused) return;
+
+      // Ready to play - resume or start
+      if (audio.readyState >= 2) {
+        await audio.play();
+        return;
+      }
+
+      // Wait for ready, then play
+      await waitForAudioReady(audio);
+      await audio.play();
     } catch (err: unknown) {
-      const e = err as { name?: string } | undefined;
-      if (e?.name !== 'AbortError') console.error('Error playing music:', err);
+      const error = err as { name?: string } | undefined;
+      if (error?.name === 'AbortError') return;
+
+      console.error('Error playing music:', err);
+      
+      // Retry: reload and play
+      const retryAudio = audioRef.current;
+      if (!retryAudio) return;
+
+      try {
+        retryAudio.muted = false;
+        retryAudio.volume = volume;
+        
+        if (retryAudio.readyState < 4) {
+          retryAudio.load();
+          await waitForAudioReady(retryAudio);
+        }
+        
+        await retryAudio.play();
+      } catch (retryErr) {
+        console.error('Retry play failed:', retryErr);
+      }
     }
-  }, [playlist.length, volume]);
+  }, [playlist, currentTrack, volume]);
 
   const pause = useCallback(() => {
-    const a = audioRef.current;
-    if (a) a.pause();
+    audioRef.current?.pause();
   }, []);
 
   const setVolume = useCallback((newVolume: number) => {
-    const v = Math.max(0, Math.min(1, newVolume));
-    setVolumeState(v);
-    if (audioRef.current) audioRef.current.volume = v;
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+    setVolumeState(clampedVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = clampedVolume;
+    }
   }, []);
 
   return {

@@ -1,15 +1,18 @@
 import './App.css'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { usePlaylistMusic } from './hooks/usePlaylistMusic'
 import { VolumeControl } from './components/menu/VolumeControl'
 import { musicPlaylist } from './lib/types'
-import { motion, useAnimation } from 'framer-motion'
+import { useAnimation, AnimatePresence, motion } from 'framer-motion'
 import ChooseGameMode from './components/menu/ChooseGameMode'
-// import Board from './components/game/Board' // unused here
+import { Canvas } from '@react-three/fiber'
+import MainButton from './components/MainButton'
+import ParallaxBackground from './components/ParallaxBackground'
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   
   const { play, pause, setVolume, volume, hasPlayed } = usePlaylistMusic(musicPlaylist, {
     volume: 1,
@@ -23,11 +26,24 @@ function App() {
     });
   }, [controls]);
 
+  const handleNavigate = () => {
+    // Navigation will be triggered after button animation
+    navigate('/menu');
+  };
+
   return (
-    <Routes>
-      <Route path="/" element={
-        <main className="flex flex-col items-center justify-center h-screen gap-10">      
-          {/* volume control */}
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <>
+          {/* Parallax Background */}
+          <ParallaxBackground 
+            backgroundImage="/vintage-background.png"
+            depthMap="/vintage-background-depth.png"
+            intensity={100}
+          />
+          
+          {/* Volume Control - Completely separate from Canvas */}
           <VolumeControl
             volume={volume}
             hasPlayed={hasPlayed}
@@ -36,52 +52,74 @@ function App() {
             onPause={pause}
           />
 
-          <motion.button 
-            initial={false}
-            animate={controls}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              controls.start({ y: -1000, transition: { type: 'spring', stiffness: 400, damping: 32 } });
-              setTimeout(() => navigate('/menu'), 650);
+          {/* Three.js Scene - Background only */}
+          <div 
+            className="absolute inset-0 w-full h-full" 
+            style={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              zIndex: 0,
             }}
-            className="clickable-logo-button"
-
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              userSelect: 'none',
-              WebkitUserSelect: 'none',
-              MozUserSelect: 'none',
-              msUserSelect: 'none',
-              WebkitTapHighlightColor: 'transparent',
-              outline: 'none',
-              willChange: 'transform',
-              transform: 'translateZ(0)',
-              transition: 'none'
-            }}
-            
           >
-            <img 
-              className="full-width mt-15" 
-              src={"/title.png"} 
-              alt="TikTakTok - Click to Start Adventure" 
-              draggable={false}
-              onDragStart={(e) => e.preventDefault()}
-              style={{
-                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                transition: 'filter 0.3s ease',
-                userSelect: 'none',
-                pointerEvents: 'none'
+
+            <Canvas
+              camera={{ position: [0, 0, 5], fov: 75 }}
+              style={{ 
+                cursor: 'pointer',
+                width: '100%', 
+                height: '100%',
+                display: 'block',
+                pointerEvents: 'auto',
               }}
-            />
-          </motion.button>
-        </main>
-      } />
-      
-      <Route path="/menu/*" element={<ChooseGameMode />} />
-    </Routes>
+              gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+            >
+              {/* Ambient light for base illumination */}
+              <ambientLight intensity={0.4} />
+              
+              {/* Main directional light from front-right */}
+              <directionalLight 
+                position={[50, 30, 5]} 
+                intensity={15}
+                castShadow
+              />
+              
+              {/* Secondary directional light from front-left */}
+              <directionalLight 
+                position={[-5, 5, 5]} 
+                intensity={1}
+              />
+              
+              {/* Fill light from behind */}
+              <pointLight 
+                position={[0, 0, -5]} 
+                intensity={0.5}
+              />
+              
+              {/* Rim light for edge definition */}
+              <pointLight 
+                position={[-3, 3, 2]} 
+                intensity={100}
+                color="#fbff09"
+              />
+
+              <MainButton position={[0, 0, 3]} onNavigate={handleNavigate} />
+            </Canvas>
+
+          </div>
+
+          <div className="relative z-10">
+          </div>
+          </>
+        } />
+        
+        <Route path="/menu/*" element={
+          <ChooseGameMode />
+        } />
+      </Routes>
+    </AnimatePresence>
   )
 }
 
