@@ -27,6 +27,14 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  overflow: hidden; /* Prevent scrolling */
+  touch-action: none; /* Prevent mobile scroll/zoom */
+  overscroll-behavior: none; /* Prevent rubber-banding */
+}
+
+html {
+  overflow: hidden; /* Prevent scrolling */
+  overscroll-behavior: none; /* Prevent rubber-banding */
 }
 
 h1 {
